@@ -4,8 +4,8 @@
 --- display block (env / \[..\] / $$..$$) the whole block is used.
 --- The result is written to a temporary Markdown file and rendered by live-preview.nvim.
 --- API: require('latex-live-preview').toggle() / start() / stop() / is_running()
---- The :LatexPreviewStart / Stop / Toggle commands are declared in
---- plugin/latex-live-preview.lua and load this module on first use.
+--- The :LatexPreview command is declared in plugin/latex-live-preview.lua
+--- (start / stop / toggle) and loads this module on first use.
 
 local M = {}
 

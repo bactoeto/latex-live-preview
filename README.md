@@ -45,9 +45,9 @@ require('latex-live-preview').setup({
 
 | Command | Description |
 | --- | --- |
-| `:LatexPreviewToggle` | Toggle the preview |
-| `:LatexPreviewStart` | Start the local server and open the browser |
-| `:LatexPreviewStop` | Stop the preview |
+| `:LatexPreview start` | Start the local server and open the browser |
+| `:LatexPreview stop` | Stop the preview |
+| `:LatexPreview toggle` | Toggle the preview |
 
 ```lua
 vim.keymap.set('n', '<leader>pt', function()
