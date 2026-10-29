@@ -4,6 +4,8 @@
 --- display block (env / \[..\] / $$..$$) the whole block is used.
 --- The result is written to a temporary Markdown file and rendered by live-preview.nvim.
 --- API: require('latex-live-preview').toggle() / start() / stop() / is_running()
+--- The :LatexPreviewStart / Stop / Toggle commands are declared in
+--- plugin/latex-live-preview.lua and load this module on first use.
 
 local M = {}
 
@@ -24,7 +26,7 @@ local REF_CMDS = { 'label', 'eqref', 'pageref', 'autoref', 'vref', 'cref', 'Cref
 
 local uv = vim.uv or vim.loop
 local timer = uv.new_timer()
-local started, setup_done = false, false
+local started, inited = false, false
 
 local function fail(msg)
   vim.notify('latex-live-preview: ' .. msg, vim.log.levels.ERROR)
@@ -221,12 +223,32 @@ local function schedule()
   timer:start(M.config.debounce_ms, 0, vim.schedule_wrap(update))
 end
 
+--- Autocommands are only needed once the preview is started
+local function init()
+  if inited then
+    return
+  end
+  inited = true
+
+  local group = vim.api.nvim_create_augroup('LatexLivePreview', { clear = true })
+  vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI', 'InsertLeave', 'CursorMoved', 'CursorMovedI' }, {
+    group = group,
+    pattern = '*.tex',
+    callback = schedule,
+  })
+  vim.api.nvim_create_autocmd('BufEnter', {
+    group = group,
+    pattern = '*.tex',
+    callback = function() if started then update() end end,
+  })
+end
+
 function M.is_running()
   return started and preview_running()
 end
 
 function M.start()
-  M.setup()
+  init()
   if M.is_running() then
     return true
   end
@@ -278,32 +300,9 @@ function M.toggle()
   return M.start()
 end
 
+--- Override the default configuration. Initialization happens automatically.
 function M.setup(opts)
   M.config = vim.tbl_deep_extend('force', M.config, opts or {})
-  if setup_done then
-    return
-  end
-  setup_done = true
-
-  local group = vim.api.nvim_create_augroup('LatexLivePreview', { clear = true })
-  vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI', 'InsertLeave', 'CursorMoved', 'CursorMovedI' }, {
-    group = group,
-    pattern = '*.tex',
-    callback = schedule,
-  })
-  vim.api.nvim_create_autocmd('BufEnter', {
-    group = group,
-    pattern = '*.tex',
-    callback = function() if started then update() end end,
-  })
-
-  for name, fn in pairs({ Start = M.start, Stop = M.stop, Toggle = M.toggle }) do
-    vim.api.nvim_create_user_command(
-      'LatexPreview' .. name,
-      fn,
-      { desc = name .. ' LaTeX math preview', force = true }
-    )
-  end
 end
 
 return M

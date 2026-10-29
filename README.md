@@ -31,7 +31,8 @@ vim.pack.add({
 }
 ```
 
-The plugin sets itself up on load. To configure it manually:
+The commands are available as soon as the plugin loads; the preview module itself
+is only loaded the first time you use one of them. To change the defaults:
 
 ```lua
 require('latex-live-preview').setup({
