@@ -154,9 +154,9 @@ function M._extract_at(lines, lnum)
     if line_text ~= '' then blocks[#blocks + 1] = line_text end
   end
 
-  local content = '# LaTeX Math Preview\n'
+  local content = ''
   if #blocks > 0 then
-    content = content .. '\n' .. table.concat(blocks, '\n\n') .. '\n'
+    content = table.concat(blocks, '\n\n') .. '\n'
   end
   return { content = content, blocks = blocks }
 end
