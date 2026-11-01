@@ -1,7 +1,7 @@
 --- latex-live-preview: preview the LaTeX math under the cursor in a browser
 --- Requires live-preview.nvim for Markdown + KaTeX rendering.
---- Inline math on the cursor line ($..$) is extracted; when the cursor is inside a
---- display block (env / \[..\] / $$..$$) the whole block is used.
+--- The whole cursor line is kept when it holds inline math ($..$); when the
+--- cursor is inside a display block (env / \[..\] / $$..$$) the whole block is used.
 --- The result is written to a temporary Markdown file and rendered by live-preview.nvim.
 --- API: require('latex-live-preview').toggle() / start() / stop() / is_running()
 --- The :LatexPreview command is declared in plugin/latex-live-preview.lua
@@ -85,7 +85,8 @@ local function display(body)
   return body ~= '' and ('$$\n' .. body .. '\n$$') or nil
 end
 
---- Extract math on the cursor line; the whole block when the cursor is inside one.
+--- Extract the preview blocks under the cursor: the display block overlapping
+--- the cursor line, or else the whole cursor line when it holds inline math.
 --- @param lines string[] buffer lines
 --- @param lnum number cursor line (1-based)
 --- @return { content: string, blocks: string[] }
@@ -99,15 +100,9 @@ function M._extract_at(lines, lnum)
   end
   local line_end = (text:find('\n', start, true) or #text + 1) - 1
 
-  local blocks, parts = {}, nil
-  local function flush()
-    if parts then blocks[#blocks + 1] = table.concat(parts, ' ') end
-    parts = nil
-  end
+  local blocks, inline = {}, false
   local function add(block)
-    if not block then return end
-    flush()
-    blocks[#blocks + 1] = block
+    if block then blocks[#blocks + 1] = block end
   end
 
   local p = 1
@@ -130,13 +125,9 @@ function M._extract_at(lines, lnum)
     elseif c == '$' then
       close = find_unescaped(text, '$', p + 1)
       if close then
-        -- The formula overlaps the cursor line (multi-line inline math included)
+        -- Inline math overlapping the cursor line: keep the whole line later
         if start <= close then
-          local inner = trim(M._sanitize((text:sub(p + 1, close - 1):gsub('\n', ' '))))
-          if inner ~= '' then
-            parts = parts or {}
-            parts[#parts + 1] = '$' .. inner .. '$'
-          end
+          inline = true
         end
         p = close + 1
       else
@@ -157,7 +148,11 @@ function M._extract_at(lines, lnum)
       p = p + 1
     end
   end
-  flush()
+  -- A display block wins; otherwise copy the cursor line as written
+  if #blocks == 0 and inline then
+    local line_text = trim(M._sanitize(text:sub(start, line_end)))
+    if line_text ~= '' then blocks[#blocks + 1] = line_text end
+  end
 
   local content = '# LaTeX Math Preview\n'
   if #blocks > 0 then

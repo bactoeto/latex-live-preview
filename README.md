@@ -6,7 +6,11 @@
 >
 > *Entirely AI-generated. Reference only.*
 
-Preview the LaTeX math under your cursor in a browser. The plugin extracts the inline formulas on the current line — or the whole display block when the cursor is inside one — writes them to a temporary Markdown file and lets [live-preview.nvim](https://github.com/brianhuster/live-preview.nvim) render it with KaTeX.
+Preview the LaTeX math under your cursor in a browser. The plugin copies the
+cursor line as written when it holds inline math — or the whole display block
+when the cursor is inside one — writes it to a temporary Markdown file and lets
+[live-preview.nvim](https://github.com/brianhuster/live-preview.nvim) render it
+with KaTeX.
 
 ## Requirements
 
@@ -59,7 +63,9 @@ Lua API: `start()`, `stop()`, `toggle()` (returns the new state), `is_running()`
 
 ## Behavior
 
-- **Inline math**: every `$...$` on the cursor line; several formulas on the same line are joined into one line.
+- **Inline math**: the whole cursor line is copied when it holds a `$...$`,
+  surrounding text included; the preview is empty when the line has no inline
+  math.
 - **Display math**: when the cursor is anywhere inside `\begin{equation}` / `align` / `alignat` / `gather` / `multline` / `eqnarray` / `flalign` (with or without `*`), `\[...\]` or `$$...$$`, the whole block is used.
 - Cursor moves and edits refresh after a 300 ms debounce; the browser re-renders in place without a full reload.
 - Only commands invisible in a preview are removed: `\label`, `\ref`, `\eqref`, `\pageref`, `\autoref`, `\vref`, `\cref`, `\Cref` and `\cite` variants. The math itself is kept as written.
@@ -71,6 +77,9 @@ Lua API: `start()`, `stop()`, `toggle()` (returns the new state), `is_running()`
 - `multline`, `eqnarray` and `flalign` are passed through unchanged, so KaTeX reports `No such environment`.
 - `\input` / `\include` files are not followed.
 - Nested environments with the same name are not supported (invalid LaTeX anyway).
+- The text around inline formulas is rendered as Markdown, so `_x_`, `*` and `#`
+  in it are interpreted.
+- A line holding both `$x$` and `$$y$$` previews the display block only.
 
 ## License
 
